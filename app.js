@@ -3,12 +3,40 @@ require("dotenv").config();
 const express = require("express");
 const askBYMS = require("./ai").askBYMS;
 const manageOrder = require("./ai").manageOrder;
-const { envoyerMessage } = require("./whatsapp");
+const { envoyerMessage, envoyerImage } = require("./whatsapp");
 
 const app = express();
 app.use(express.json());
+app.use("/photos", express.static("photos"));
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
+const BASE_URL = process.env.BASE_URL || "https://byms-whatsapp-bot.onrender.com";
+
+// Marques reconnues et leur photo associée (fichier dans le dossier /photos)
+const photosMarques = [
+    { motsCles: ["gshock", "g-shock", "g shock"], fichier: "casio-gshock.jpg", nom: "Casio G-SHOCK" },
+    { motsCles: ["edifice"], fichier: "casio-edifice.jpg", nom: "Casio Edifice" },
+    { motsCles: ["curren homme", "curren pour homme"], fichier: "curren-homme.jpg", nom: "Curren Modèle Homme" },
+    { motsCles: ["curren femme", "curren pour femme"], fichier: "curren-femme.jpg", nom: "Curren Modèle Femme" },
+    { motsCles: ["curren luxueux", "curren luxe", "curren chrono"], fichier: "curren-luxueux.jpg", nom: "Curren Luxueux" },
+    { motsCles: ["curren"], fichier: "curren-homme.jpg", nom: "Curren" }, // par défaut si juste "curren"
+    { motsCles: ["mont blanc", "montblanc"], fichier: "montblanc.jpg", nom: "Mont Blanc" },
+    { motsCles: ["cartier"], fichier: "cartier.jpg", nom: "Cartier" },
+    { motsCles: ["hublot"], fichier: "hublot.jpg", nom: "Hublot" },
+    { motsCles: ["poedagar"], fichier: "poedagar.jpg", nom: "POEDAGAR" },
+    { motsCles: ["swatch"], fichier: "swatch.jpg", nom: "Swatch" },
+    { motsCles: ["daniel wellington", "dw"], fichier: "daniel-wellington.jpg", nom: "Daniel Wellington" },
+    { motsCles: ["full arabica", "arabica"], fichier: "full-arabica.jpg", nom: "Full Arabica" }
+];
+
+function detecterMarque(texte) {
+    for (const marque of photosMarques) {
+        if (marque.motsCles.some(mot => texte.includes(mot))) {
+            return marque;
+        }
+    }
+    return null;
+}
 
 const NUMERO_PROPRIETAIRE = process.env.NUMERO_PROPRIETAIRE; // ex: 2250160114397
 
@@ -167,6 +195,14 @@ app.post("/webhook", async (req, res) => {
         const texte = message.text?.body;
 
         if (texte) {
+
+            const marqueDetectee = !sessionsCommande[expediteur] ? detecterMarque(texte.toLowerCase()) : null;
+
+            if (marqueDetectee) {
+                const urlImage = `${BASE_URL}/photos/${marqueDetectee.fichier}`;
+                await envoyerImage(expediteur, urlImage, `⌚ ${marqueDetectee.nom}`);
+            }
+
             const reponse = await genererReponse(texte, expediteur);
             await envoyerMessage(expediteur, reponse);
         }
