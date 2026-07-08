@@ -16,9 +16,9 @@ async function genererReponse(message) {
 
     if (texte.includes("bonjour")) {
 
-        return `👋 Bonjour et bienvenue chez Kiosque Al Kass.
+        return `👋 Bonjour et bienvenue chez Kiosque Al Kass !
 
-Je suis BYMS, votre assistant virtuel.
+Je suis BYMS, votre assistant. En ce moment, toutes nos montres sont en promo 🔥 — jusqu'à 5 000 FCFA de réduction selon le modèle.
 
 Comment puis-je vous aider ?
 
@@ -30,15 +30,19 @@ Comment puis-je vous aider ?
     } else if (texte.includes("livraison")) {
 
         return `🇨🇮 Côte d'Ivoire :
-Paiement à la livraison.
+✅ Paiement à la livraison — 0 risque pour vous !
 
 🌍 Afrique de l'Ouest :
 Expédition + livraison : 7 000 FCFA.
-Paiement avant expédition.`;
+Paiement avant expédition.
+
+Dites-moi votre ville, je vous confirme les délais 🚀`;
 
     } else if (texte.includes("commander")) {
 
-        return `Pour commander veuillez envoyer :
+        return `Parfait, on finalise ça tout de suite ⌚🔥
+
+Envoyez-moi juste ces infos :
 
 Nom :
 Téléphone :
@@ -46,7 +50,9 @@ Pays :
 Ville :
 Adresse :
 Modèle :
-Quantité :`;
+Quantité :
+
+Dès réception, votre commande est validée !`;
 
     } else {
 
