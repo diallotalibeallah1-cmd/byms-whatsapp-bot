@@ -10,6 +10,28 @@ app.use(express.json());
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 
+const NUMERO_PROPRIETAIRE = process.env.NUMERO_PROPRIETAIRE; // ex: 2250160114397
+
+async function notifierProprietaire(order, clientId) {
+
+    if (!NUMERO_PROPRIETAIRE) return;
+
+    const recap = `🆕 Nouvelle commande BYMS !
+
+👤 Nom : ${order.nom}
+📞 Téléphone : ${order.telephone}
+🌍 Pays : ${order.pays}
+🏙️ Ville : ${order.ville}
+📍 Adresse : ${order.adresse}
+⌚ Modèle : ${order.modele}
+🔢 Quantité : ${order.quantite}
+
+Client WhatsApp : ${clientId}`;
+
+    await envoyerMessage(NUMERO_PROPRIETAIRE, recap);
+
+}
+
 // Sessions de commande en cours, par numéro/identifiant client
 // ⚠️ Stockage en mémoire : se réinitialise si le serveur redémarre
 const sessionsCommande = {};
@@ -26,6 +48,7 @@ async function genererReponse(message, clientId) {
 
         if (resultat.complete) {
             delete sessionsCommande[clientId]; // commande finalisée, on nettoie la session
+            await notifierProprietaire(resultat.order, clientId);
         } else {
             sessionsCommande[clientId] = resultat.order;
         }
@@ -68,6 +91,7 @@ Dites-moi votre ville, je vous confirme les délais 🚀`;
 
         if (resultat.complete) {
             delete sessionsCommande[clientId];
+            await notifierProprietaire(resultat.order, clientId);
         } else {
             sessionsCommande[clientId] = resultat.order;
         }
