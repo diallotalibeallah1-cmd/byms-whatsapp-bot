@@ -68,4 +68,68 @@ Livraison + expédition = 7000 FCFA.
 
 }
 
-module.exports=askBYMS;
+module.exports = { askBYMS, manageOrder };
+
+async function manageOrder(message, currentOrder) {
+
+    const champsRequis = ["nom", "telephone", "pays", "ville", "adresse", "modele", "quantite"];
+
+    const response = await client.chat.completions.create({
+
+        model: "gpt-4.1-mini",
+
+        response_format: { type: "json_object" },
+
+        messages: [
+            {
+                role: "system",
+                content: `
+Tu aides à collecter une commande de montres pour BYMS (Kiosque Al Kass).
+
+Voici les informations déjà connues sur cette commande (peuvent être vides) :
+${JSON.stringify(currentOrder)}
+
+Voici le nouveau message du client :
+"${message}"
+
+Extrait toute nouvelle information pertinente du message (nom, téléphone, pays, ville, adresse, modèle de montre, quantité) et fusionne-la avec les informations déjà connues. Ne supprime jamais une information déjà connue sauf si le client la corrige explicitement.
+
+Réponds UNIQUEMENT avec un objet JSON de cette forme, sans aucun texte autour :
+
+{
+  "nom": "",
+  "telephone": "",
+  "pays": "",
+  "ville": "",
+  "adresse": "",
+  "modele": "",
+  "quantite": "",
+  "reponse_client": "Un message court et persuasif en français à envoyer au client, soit pour demander les infos manquantes (une par une ou groupées si plusieurs manquent), soit pour confirmer la commande si tout est complet."
+}
+
+Si tous les champs (nom, telephone, pays, ville, adresse, modele, quantite) sont remplis, "reponse_client" doit être un message de confirmation chaleureux et vendeur récapitulant la commande, en précisant que le paiement se fait à la livraison (Côte d'Ivoire) ou avant expédition (Afrique de l'Ouest, +7000 FCFA).
+`
+            }
+        ]
+
+    });
+
+    const data = JSON.parse(response.choices[0].message.content);
+
+    const complete = champsRequis.every(champ => data[champ] && data[champ].toString().trim() !== "");
+
+    return {
+        order: {
+            nom: data.nom || "",
+            telephone: data.telephone || "",
+            pays: data.pays || "",
+            ville: data.ville || "",
+            adresse: data.adresse || "",
+            modele: data.modele || "",
+            quantite: data.quantite || ""
+        },
+        reply: data.reponse_client,
+        complete
+    };
+
+}
