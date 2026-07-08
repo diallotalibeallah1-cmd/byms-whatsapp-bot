@@ -26,4 +26,26 @@ async function envoyerMessage(destinataire, texte) {
     }
 }
 
-module.exports = { envoyerMessage };
+async function envoyerImage(destinataire, urlImage, legende) {
+    try {
+        await axios.post(
+            `https://graph.facebook.com/${API_VERSION}/${PHONE_ID}/messages`,
+            {
+                messaging_product: "whatsapp",
+                to: destinataire,
+                type: "image",
+                image: { link: urlImage, caption: legende || "" }
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${WHATSAPP_TOKEN}`,
+                    "Content-Type": "application/json"
+                }
+            }
+        );
+    } catch (err) {
+        console.error("Erreur envoi image WhatsApp :", err.response?.data || err.message);
+    }
+}
+
+module.exports = { envoyerMessage, envoyerImage };
