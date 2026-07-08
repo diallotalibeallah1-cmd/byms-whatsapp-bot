@@ -1,7 +1,8 @@
 require("dotenv").config();
 
 const express = require("express");
-const askBYMS = require("./ai");
+const askBYMS = require("./ai").askBYMS;
+const manageOrder = require("./ai").manageOrder;
 const { envoyerMessage } = require("./whatsapp");
 
 const app = express();
@@ -9,10 +10,29 @@ app.use(express.json());
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 
+// Sessions de commande en cours, par numéro/identifiant client
+// ⚠️ Stockage en mémoire : se réinitialise si le serveur redémarre
+const sessionsCommande = {};
+
 // Logique de réponse partagée entre /chat et le webhook WhatsApp
-async function genererReponse(message) {
+async function genererReponse(message, clientId) {
 
     const texte = message.toLowerCase();
+
+    // Si une commande est déjà en cours pour ce client, on continue de la remplir
+    if (sessionsCommande[clientId]) {
+
+        const resultat = await manageOrder(message, sessionsCommande[clientId]);
+
+        if (resultat.complete) {
+            delete sessionsCommande[clientId]; // commande finalisée, on nettoie la session
+        } else {
+            sessionsCommande[clientId] = resultat.order;
+        }
+
+        return resultat.reply;
+
+    }
 
     if (texte.includes("bonjour")) {
 
@@ -40,19 +60,19 @@ Dites-moi votre ville, je vous confirme les délais 🚀`;
 
     } else if (texte.includes("commander")) {
 
-        return `Parfait, on finalise ça tout de suite ⌚🔥
+        sessionsCommande[clientId] = {
+            nom: "", telephone: "", pays: "", ville: "", adresse: "", modele: "", quantite: ""
+        };
 
-Envoyez-moi juste ces infos :
+        const resultat = await manageOrder(message, sessionsCommande[clientId]);
 
-Nom :
-Téléphone :
-Pays :
-Ville :
-Adresse :
-Modèle :
-Quantité :
+        if (resultat.complete) {
+            delete sessionsCommande[clientId];
+        } else {
+            sessionsCommande[clientId] = resultat.order;
+        }
 
-Dès réception, votre commande est validée !`;
+        return resultat.reply;
 
     } else {
 
@@ -74,12 +94,13 @@ app.get("/", (req, res) => {
 app.post("/chat", async (req, res) => {
 
     const message = req.body.message;
+    const clientId = req.body.from || "web-test";
 
     if (!message) {
         return res.status(400).json({ erreur: "Le champ 'message' est requis." });
     }
 
-    const reponse = await genererReponse(message);
+    const reponse = await genererReponse(message, clientId);
 
     res.json({
         assistant: "BYMS",
@@ -122,7 +143,7 @@ app.post("/webhook", async (req, res) => {
         const texte = message.text?.body;
 
         if (texte) {
-            const reponse = await genererReponse(texte);
+            const reponse = await genererReponse(texte, expediteur);
             await envoyerMessage(expediteur, reponse);
         }
 
