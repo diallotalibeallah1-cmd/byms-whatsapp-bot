@@ -13,20 +13,13 @@ const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const BASE_URL = process.env.BASE_URL || "https://byms-whatsapp-bot.onrender.com";
 
 // Marques reconnues et leur photo associée (fichier dans le dossier /photos)
+// ⚠️ Seules les marques pour lesquelles on a reçu une vraie photo sont listées ici.
+// Les autres marques ont un prix (voir ai.js) mais pas encore de photo.
 const photosMarques = [
-    { motsCles: ["gshock", "g-shock", "g shock"], fichier: "casio-gshock.jpg", nom: "Casio G-SHOCK" },
-    { motsCles: ["edifice"], fichier: "casio-edifice.jpg", nom: "Casio Edifice" },
-    { motsCles: ["curren homme", "curren pour homme"], fichier: "curren-homme.jpg", nom: "Curren Modèle Homme" },
-    { motsCles: ["curren femme", "curren pour femme"], fichier: "curren-femme.jpg", nom: "Curren Modèle Femme" },
-    { motsCles: ["curren luxueux", "curren luxe", "curren chrono"], fichier: "curren-luxueux.jpg", nom: "Curren Luxueux" },
-    { motsCles: ["curren"], fichier: "curren-homme.jpg", nom: "Curren" }, // par défaut si juste "curren"
+    { motsCles: ["curren"], fichier: "curren.jpg", nom: "Curren" },
     { motsCles: ["mont blanc", "montblanc"], fichier: "montblanc.jpg", nom: "Mont Blanc" },
-    { motsCles: ["cartier"], fichier: "cartier.jpg", nom: "Cartier" },
-    { motsCles: ["hublot"], fichier: "hublot.jpg", nom: "Hublot" },
-    { motsCles: ["poedagar"], fichier: "poedagar.jpg", nom: "POEDAGAR" },
-    { motsCles: ["swatch"], fichier: "swatch.jpg", nom: "Swatch" },
-    { motsCles: ["daniel wellington", "dw"], fichier: "daniel-wellington.jpg", nom: "Daniel Wellington" },
-    { motsCles: ["full arabica", "arabica"], fichier: "full-arabica.jpg", nom: "Full Arabica" }
+    { motsCles: ["tommy", "hilfiger"], fichier: "tommy-hilfiger.jpg", nom: "Tommy Hilfiger" },
+    { motsCles: ["rolex"], fichier: "rolex.jpg", nom: "Rolex" }
 ];
 
 function detecterMarque(texte) {
